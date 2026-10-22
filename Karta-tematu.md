@@ -1,6 +1,6 @@
 # Karta zgłoszenia tematu projektu
 
-**Grupa:** L2 · **Zespół:** Antoni Przyłuski, Volodymyr Poleshko, Arsenii Voron · **Data:** 22.10.2026
+**Grupa:** L2 · **Zespół:** "Nr 1 - "Smoki":  Antoni Przyłuski, Volodymyr Poleshko, Arsenii Voron · **Data:** 22.10.2026
 Sztuczna inteligencja — laboratorium · Collegium Da Vinci · rok akad. 2026/2027
 Oddajecie mailem do **22.10, 16:45**, temat `SI L2 · Z<nr zespołu> · karta`.
 
@@ -26,6 +26,8 @@ Podczas poszukiwania zakupów online często podczas wyszukiwania dokładnej rze
 - [ ] system ekspertowy / wnioskowanie regułowe
 - [ ] algorytm genetyczny
 - [x] klasyczne uczenie maszynowe
+
+Algorytm będzie analizował historię zakupów i podobieństwo między produktami. Na tej podstawie system będzie rekomendował użytkownikowi produkty podobne do tych, które kupował wcześniej. ( Item-based Collaborative Filtering z wykorzystaniem.) ( KNN ) scikit-learn
 
 Dlaczego ta technologia pasuje do tego problemu (2–3 zdania):
 
@@ -53,6 +55,18 @@ Warstwa Frontendu / Interfejsu
 - Punkt odniesienia (prosta metoda, z którą porównacie wynik): Klasyczne wyszukiwanie słów kluczowych, wybrane produkty np. z Bazy danych sql plecenia
 LIKE
 
+Metryka: Precision@5 - to metryka, która pokazuje, ile spośród pięciu rekomendowanych produktów jest trafnych. Będziemy porównywać rekomendacje systemu z rzeczywistymi zakupami użytkowników. Dzięki temu sprawdzimy skuteczność naszego algorytmu.
+
+Próg sukcesu: Precision@5 ≥ 10%.
+
+System będzie generował 5-8 rekomendowanych produktów dla użytkownika. Sprawdzimy, ile z nich faktycznie znalazło się w jego późniejszych zakupach.
+
+Punkt odniesienia: Prosty system rekomendujący najpopularniejsze produkty. Nasz algorytm powinien osiągać lepszy wynik niż ta metoda.
+
+Jeśli użytkownik nie ma jeszcze historii zakupów, przed dokonaniem pierwszego zakupu wypełni krótką ankietę, w której zadamy mu kilka pytań dotyczących jego zainteresowań i preferencji. Dzięki temu system będzie mógł lepiej zrozumieć, czego użytkownik szuka, i zaproponować mu odpowiednie produkty.
+
+Gdy użytkownik zacznie dokonywać zakupów, system będzie analizował jego historię zakupową i na jej podstawie stopniowo ulepszał rekomendacje, aby były bardziej trafne i dostosowane do jego potrzeb.
+
 ## 9. Zakres minimalny (co powstanie na pewno)
 
 system uczący się na historii wybieranych rzeczy i przedstawiający najbardziej trafne / podobne do naszego wyszukiwania
@@ -65,8 +79,14 @@ Pełna strona sklepu, graficznie i logicznie działająca
 
 (uzupełnicie 22.10)
 
-## 12. Główne ryzyko i plan awaryjny
-ryzyko: zbyt uboga historia wyszukiwania i działania systemu, niedokładnie działający system rekomendacji
----
+## 12. Główne ryzyko i plan awaryjn
+
+**Główne ryzyko:** Zbyt mała liczba zakupów niektórych użytkowników oraz niska skuteczność rekomendacji.
+
+**Plan awaryjny:** Jeśli algorytm KNN nie osiągnie wymaganej skuteczności, zastosujemy prostszy system rekomendacji oparty na najpopularniejszych produktach. Dla użytkowników bez historii zakupów albo bez uzypewnego formularza również będziemy wyświetlać najpopularniejsze produkty.
+
+Dzięki temu system będzie działał nawet przy niewystarczającej ilości danych.
 plan awarynjy: wybranie innego, prostszego rozwiązania
 *Decyzja prowadzącego:* [ ] zatwierdzony  [ ] do poprawy · *Uwagi:*
+
+
