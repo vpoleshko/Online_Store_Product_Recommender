@@ -10,8 +10,8 @@ Oddajecie mailem do **22.10, 16:45**, temat `SI L2 · Z<nr zespołu> · karta`.
 
 | Imię i nazwisko | Nr albumu | Rola (wstępna) |
 |---|---|---|
-| Antoni Przyłuski|31129 | Frontend / UX|
-| Volodymyr Poleshko|31078 | Data Scientist, Project Manager | 
+| Antoni Przyłuski|31129 | Data Scientist, Project Manager |
+| Volodymyr Poleshko|31078 | Frontend / UX | 
 | Arseni Voron|31818 | Backend, Developer |
 
 ## 2. Roboczy tytuł (PL)
