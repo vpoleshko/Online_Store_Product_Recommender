@@ -38,9 +38,11 @@ użytkownik nie będzie cały dzień siedział przed serwisem sklepu.
 
 ## 6. Dane
 
-- Źródło: Przykładowe strony do wykonywania zakupów, źródła o uczeniu maszynowym
-- Rozmiar / format: CVS / JSON
-- Czy dane są już dostępne? tak / nie — plan pozyskania: jeszcze nie
+- Źródło: Retailrocket Recommender System Dataset — publiczny zbiór danych dostępny na platformie Kaggle, zawierający historię interakcji użytkowników z produktami w sklepie internetowym.
+  
+- Rozmiar / format: Pliki CSV zawierające informacje o przeglądaniu produktów, dodawaniu ich do koszyka, zakupach oraz właściwościach produktów.
+  
+- Czy dane są już dostępne? Tak — zbiór danych jest dostępny na Kaggle. Plan pozyskania: pobranie plików CSV, przygotowanie danych w Pythonie i import do bazy danych MongoDB.
 
 ## 7. Stos technologiczny
 
