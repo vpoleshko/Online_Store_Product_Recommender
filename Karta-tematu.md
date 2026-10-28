@@ -51,6 +51,8 @@ Warstwa Backendu / API
 Baza Danych
 Warstwa Frontendu / Interfejsu
 
+Python, pandas, numpy, scikit-learn,  matplotlib
+
 ## 8. Kryterium sukcesu
 
 - Metryka i próg: ilośc wybranych produktów pasujących do historii wyszukiwania, top najlepszych do tego pasujących zwróconych przez system
@@ -79,7 +81,7 @@ Pełna strona sklepu, graficznie i logicznie działająca
 
 ## 11. Repozytorium
 
-(uzupełnicie 22.10)
+https://github.com/vpoleshko/Online_Store_Product_Recommender/edit/main/
 
 ## 12. Główne ryzyko i plan awaryjn
 
