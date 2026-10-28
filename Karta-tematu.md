@@ -19,7 +19,9 @@ System rekomendacji produktów w sklepie internetowym
 ## 3. Tytuł (EN)
 Product recommendation system in an online store
 ## 4. Problem — co system ma robić i dla kogo (3–5 zdań)
+
 Podczas poszukiwania zakupów online często podczas wyszukiwania dokładnej rzeczy pojawiają się rzeczy kompletnie nie związane z kryteriami naszego wyszukiwania. Ten system ma zapamiętywac poprzednie nasze wybory i na podstawie historii wyszukiwania i podpowiadanych przez sam system artykułów podobnych do naszego wyszukiwania rekomenduje odpowiednie rzeczy Odniesienie: Problematyczne wyszukiwanie i problem z rekomendacją stron zakupowych
+
 ## 5. Technologia SI
 
 - [ ] sieć neuronowa
@@ -27,7 +29,7 @@ Podczas poszukiwania zakupów online często podczas wyszukiwania dokładnej rze
 - [ ] algorytm genetyczny
 - [x] klasyczne uczenie maszynowe
 
-Algorytm będzie analizował historię zakupów i podobieństwo między produktami. Na tej podstawie system będzie rekomendował użytkownikowi produkty podobne do tych, które kupował wcześniej. ( Item-based Collaborative Filtering z wykorzystaniem.) ( KNN ) scikit-learn
+Algorytm będzie analizował historię zakupów i podobieństwo między produktami. Na tej podstawie system będzie rekomendował użytkownikowi produkty podobne do tych, które kupował wcześniej. ( Item-based Collaborative Filtering z wykorzystaniem.) ( KNN )
 
 Dlaczego ta technologia pasuje do tego problemu (2–3 zdania):
 
@@ -40,18 +42,14 @@ użytkownik nie będzie cały dzień siedział przed serwisem sklepu.
 
 - Źródło: Retailrocket Recommender System Dataset — publiczny zbiór danych dostępny na platformie Kaggle, zawierający historię interakcji użytkowników z produktami w sklepie internetowym.
   
-- Rozmiar / format: Pliki CSV zawierające informacje o przeglądaniu produktów, dodawaniu ich do koszyka, zakupach oraz właściwościach produktów.
+- Rozmiar / format: Około 305 MB (plik ZIP po pobraniu), format CSV. Zbiór zawiera około 2,75 mln zdarzeń użytkowników, m.in. przeglądanie produktów, dodawanie do koszyka i zakupy.
   
-- Czy dane są już dostępne? Tak — zbiór danych jest dostępny na Kaggle. Plan pozyskania: pobranie plików CSV, przygotowanie danych w Pythonie i import do bazy danych MongoDB.
+- Czy dane są już dostępne? Tak
 
 ## 7. Stos technologiczny
 
-Warstaw uczenia maszynowego
-Warstwa Backendu / API
-Baza Danych
-Warstwa Frontendu / Interfejsu
-
-Python, pandas, numpy, scikit-learn,  matplotlib
+Python 3.10+, Postgresql,
+pandas, numpy, scikit-learn, matplotlib, nootebook, docker, react, JavaScript, CSS, FAST API
 
 ## 8. Kryterium sukcesu
 
