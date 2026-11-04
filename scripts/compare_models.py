@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-from src.recommender.baseline import recommend_popular
+from src.recommender.knn import ItemKNN
 from src.recommender.evaluation import precision_at_k, f1_at_k
 
 
@@ -9,20 +9,24 @@ def main():
     train = pd.read_csv("data/processed/train.csv")
     test = pd.read_csv("data/processed/test.csv")
 
-    test_purchases = test[test["event"] == "transaction"]
     actual_purchases = (
-        test_purchases.groupby("visitorid")["itemid"]
-        .apply(lambda x: set(x))
+        test[test["event"] == "transaction"]
+        .groupby("visitorid")["itemid"]
+        .apply(set)
         .to_dict()
     )
 
     seen_items = (
         train.groupby("visitorid")["itemid"]
-        .apply(lambda x: set(x))
+        .apply(set)
         .to_dict()
     )
 
-    users = set(actual_purchases) & set(seen_items)
+    users = sorted(set(actual_purchases) & set(seen_items))
+
+    if not users:
+        print("No users available for evaluation.")
+        return
 
     popular_items = (
         train[train["event"] == "transaction"]
@@ -32,34 +36,74 @@ def main():
         .index.tolist()
     )
 
-    precision_scores = []
-    f1_scores = []
+    knn = ItemKNN(n_neighbors=20, max_items=5000)
+    knn.fit(train)
+
+    baseline_precision = []
+    baseline_f1 = []
+    knn_precision = []
+    knn_f1 = []
+
+    users_with_knn_recs = 0
 
     for user in users:
-        already_seen = seen_items[user]
+        actual = actual_purchases[user]
+        seen = seen_items[user]
 
-        recommendations = [
+        # Baseline
+        baseline_recs = [
             item for item in popular_items
-            if item not in already_seen
+            if item not in seen
         ][:5]
 
-        actual = actual_purchases[user]
+        # KNN
+        knn_recs = knn.recommend(user, k=5)
 
-        precision_scores.append(
-            precision_at_k(recommendations, actual)
+        if knn_recs:
+            users_with_knn_recs += 1
+
+        baseline_precision.append(
+            precision_at_k(baseline_recs, actual, 5)
         )
-        f1_scores.append(
-            f1_at_k(recommendations, actual)
+        baseline_f1.append(
+            f1_at_k(baseline_recs, actual, 5)
         )
 
-    if not users:
-        print("No eligible users found.")
-        return
+        knn_precision.append(
+            precision_at_k(knn_recs, actual, 5)
+        )
+        knn_f1.append(
+            f1_at_k(knn_recs, actual, 5)
+        )
 
-    print(" - BASELINE RESULTS -")
-    print("Users evaluated:", len(users))
-    print("Precision@5:", round(sum(precision_scores) / len(users), 4))
-    print("Macro-F1@5:", round(sum(f1_scores) / len(users), 4))
+    bp = sum(baseline_precision) / len(users)
+    bf = sum(baseline_f1) / len(users)
+
+    kp = sum(knn_precision) / len(users)
+    kf = sum(knn_f1) / len(users)
+
+    improvement = kf - bf
+
+    print("\n - MODEL COMPARISON -")
+    print(f"Users evaluated: {len(users)}")
+    print(f"KNN coverage: {users_with_knn_recs / len(users):.2%}")
+
+    print(f"\n{'Metric':<20} {'Baseline':<12} {'KNN':<12}")
+    print("-" * 44)
+    print(f"{'Precision@5':<20} {bp:<12.4f} {kp:<12.4f}")
+    print(f"{'Macro-F1@5':<20} {bf:<12.4f} {kf:<12.4f}")
+
+    print(f"\nMacro-F1 improvement: {improvement:+.4f}")
+
+    print(
+        "Precision@5 >= 10%:",
+        "PASS" if kp >= 0.10 else "FAIL"
+    )
+
+    print(
+        "F1 improvement >= 0.05:",
+        "PASS" if improvement >= 0.05 else "FAIL"
+    )
 
 
 if __name__ == "__main__":
