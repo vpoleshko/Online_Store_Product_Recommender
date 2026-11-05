@@ -61,7 +61,8 @@ Planuję stworzyć krótki formularz dla nowych użytkowników, który pozwoli p
 
 
 
-
+Antoni Przyłuski:
+co zrobiłem: wraz z drużyną przymyślałem plan działania aplikacji według działania algorytmu item-based KNN - analizuje historię użytkownika i znajduje produkty podobne do tych, które wcześniej przeglądał lub kupował. Podobieństwo między produktami oblicza za pomocą podobieństwa cosinusowego, a następnie wybiera te z najwyższymi wynikami. Jeśli nie znajdzie 5 odpowiednich produktów, uzupełnia listę najpopularniejszymi produktami (Popularity Fallback).
 
 
 
