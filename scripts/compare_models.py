@@ -22,6 +22,13 @@ def main():
         .to_dict()
     )
 
+    purchased_items = (
+        train[train["event"] == "transaction"]
+        .groupby("visitorid")["itemid"]
+        .apply(set)
+        .to_dict()
+    )
+
     users = sorted(set(actual_purchases) & set(seen_items))
 
     if not users:
@@ -36,7 +43,7 @@ def main():
         .index.tolist()
     )
 
-    knn = ItemKNN(n_neighbors=20, max_items=5000)
+    knn = ItemKNN()
     knn.fit(train)
 
     baseline_precision = []
@@ -48,12 +55,11 @@ def main():
 
     for user in users:
         actual = actual_purchases[user]
-        seen = seen_items[user]
+        bought = purchased_items.get(user, set())
 
-        # Baseline
         baseline_recs = [
             item for item in popular_items
-            if item not in seen
+            if item not in bought
         ][:5]
 
         # KNN
