@@ -40,6 +40,10 @@ Dane nadają się do item-based CF, ale trzeba odfiltrować użytkowników z jed
 
 [Volodymyr Poleshko]
 
+Odpowiedż na pytanie  Jak item-based KNN wybiera tych 5 produktów — w trzech zdaniach.
+
+Algorytm Item-based KNN analizuje historię użytkownika i znajduje produkty podobne do tych, które wcześniej przeglądał lub kupował. Podobieństwo między produktami oblicza za pomocą podobieństwa cosinusowego, a następnie wybiera te z najwyższymi wynikami. Jeśli nie znajdzie 5 odpowiednich produktów, uzupełnia listę najpopularniejszymi produktami (Popularity Fallback).
+
 05.11
 Analiza wyników porównania modeli i poprawa modelu KNN
 
