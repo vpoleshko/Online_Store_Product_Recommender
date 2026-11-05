@@ -1,6 +1,8 @@
 Sprinty binty
 
-Arsenii Voron: 
+[Arsenii Voron:] 
+
+05.11
 Wizualizacja i analiza datasetu (EDA)
 
 Co myślałem:
@@ -13,6 +15,8 @@ Co zrobiłem:
 - Przeanalizowałem zakupy: wielkość koszyka, konwersję oraz czas od pierwszego wyświetlenia do zakupu.
 - Sprawdziłem drzewo kategorii (category_tree) i właściwości produktów (item_properties, ok. 20 mln wierszy), w tym pokrycie produktów kategoriami.
 
+- Stworzyłem notebook notebooks/model_comparison.ipynb z wykresami: metryki z przedziałami ufności (bootstrap), metryki dla k od 1 do 10, rozkład trafień na użytkownika, wynik w zależności od długości historii oraz odsetek zakupów, które w ogóle można było trafić.
+
 Jaki wynik otrzymałem:
 - Dane obejmują okres od 3.05.2015 do 18.09.2015: 2,76 mln zdarzeń, 1,41 mln użytkowników i 235 tys. produktów.
 - Macierz użytkownik x produkt jest bardzo rzadka (gęstość ok. 0,0006%). 71% użytkowników ma tylko jedno zdarzenie, a tylko 20,5% oglądało co najmniej dwa różne produkty. Do filtrowania kolaboratywnego nadaje się więc tylko część danych (ok. 406 tys. użytkowników z co najmniej 2 zdarzeniami, czyli 64% zdarzeń).
@@ -21,25 +25,39 @@ Jaki wynik otrzymałem:
 - Popularność produktów ma silny długi ogon, więc potrzebna będzie rekomendacja zapasowa (popularne produkty lub popularne w kategorii) dla nowych użytkowników.
 - 78,8% produktów ze zdarzeń ma przypisaną kategorię, więc kategorie można wykorzystać jako dodatkową informację o produkcie.
 
+
 Wnioski i dalsze kroki:
 Dane nadają się do item-based CF, ale trzeba odfiltrować użytkowników z jednym zdarzeniem i dodać rekomendacje zapasowe. Podział na zbiór treningowy i testowy zrobię według czasu, a nie losowo. Jako punkt wyjścia dla wag zdarzeń przyjmę: view = 1, addtocart = 3, transaction = 5.
 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[Volodymyr Poleshko]
+
+05.11
 Analiza wyników porównania modeli i poprawa modelu KNN
 
 Co myślałem:
-Pierwsze porównanie modeli dało słaby wynik: Precision@5 wyniosło 0,0102 dla KNN wobec 0,0045 dla modelu bazowego, a poprawa Macro-F1@5 to tylko +0,0068 (kryteria: Precision@5 >= 10% i poprawa F1 >= 0,05). Zastanawiałem się, dlaczego poprawa jest tak mała. Przeanalizowałem kod i wnioski z EDA i doszedłem do następujących przyczyn:
-1. Model nie rekomendował produktów, które użytkownik już oglądał. Tymczasem z EDA wiemy, że 78% zakupów następuje w ciągu godziny od pierwszego wyświetlenia tego samego produktu, więc odrzucaliśmy właśnie najbardziej prawdopodobne trafienia.
-2. Wszystkie zdarzenia miały tę samą wagę (view = addtocart = transaction), choć dodanie do koszyka i zakup mówią o zainteresowaniu znacznie więcej niż samo wyświetlenie.
-3. Do modelu trafiało tylko 5000 najpopularniejszych produktów z 235 tys., a kupowane produkty często pochodzą z długiego ogona.
-4. Waga świeżości historii (recency_weight) była w kodzie zawsze równa 1, czyli w praktyce nie działała.
-5. Ocena jest robiona tylko na 353 użytkownikach, a przeciętny koszyk to 1,27 produktu, więc maksymalne możliwe Precision@5 jest niskie (ok. 0,2), a wyniki są zaszumione. Próg 10% jest więc bardzo trudny do osiągnięcia na tym zbiorze.
+Pierwsze porównanie modeli pokazało słabe wyniki: Precision@5 wyniosło 1,02% dla KNN i 0,45% dla Baseline, a poprawa Macro-F1@5 wyniosła +0,0068.
+Po analizie kodu i wyników EDA znalazłem kilka przyczyn:
+Model pomijał wcześniej oglądane produkty, mimo że 78% zakupów następuje w ciągu godziny od pierwszego wyświetlenia produktu.
+Wszystkie zdarzenia miały jednakową wagę, niezależnie od tego, czy był to widok, dodanie do koszyka czy zakup.
+Model uwzględniał tylko 5000 z około 235 tys. produktów.
+Mechanizm uwzględniania świeżości historii nie działał.
+Ocena obejmowała tylko 353 użytkowników, co ogranicza wiarygodność wyników.
+Dlatego próg Precision@5 ≥ 10% okazał się trudny do osiągnięcia.
 
 Co zrobiłem:
 - Zmieniłem logikę wykluczania: wykluczam tylko produkty już kupione, a nie wszystkie obejrzane (dotyczy modelu KNN i modelu bazowego, żeby porównanie było uczciwe).
 - Wprowadziłem wagi zdarzeń: view = 1, addtocart = 3, transaction = 5.
 - Zwiększyłem liczbę produktów-kandydatów z 5000 do 20000.
 - Włączyłem realne ważenie świeżością: każdy kolejny, starszy produkt z historii ma wagę 0,9 razy mniejszą od poprzedniego.
-- Stworzyłem notebook notebooks/model_comparison.ipynb z wykresami: metryki z przedziałami ufności (bootstrap), metryki dla k od 1 do 10, rozkład trafień na użytkownika, wynik w zależności od długości historii oraz odsetek zakupów, które w ogóle można było trafić.
 
 Jaki wynik otrzymałem (353 użytkowników, k = 5):
 - Precision@5: Baseline 0,0079, KNN 0,0340 (wcześniej KNN 0,0102).
@@ -47,22 +65,38 @@ Jaki wynik otrzymałem (353 użytkowników, k = 5):
 - Poprawa Macro-F1@5 względem modelu bazowego: +0,0415 (wcześniej +0,0068), czyli KNN jest teraz ponad 5 razy lepszy w F1 i ok. 4 razy w Precision.
 - Kryteria nadal niespełnione: Precision@5 >= 10% (mamy 3,4%) oraz poprawa F1 >= 0,05 (mamy 0,0415, brakuje ok. 0,009).
 
-Wnioski i dalsze kroki:
-Największy wzrost dało zaprzestanie wykluczania obejrzanych produktów oraz wprowadzenie wag zdarzeń. Mała poprawa na początku wynikała więc głównie z błędów w konstrukcji modelu i oceny, a nie z samej metody KNN. Próg 10% Precision@5 jest prawdopodobnie nierealistyczny przy średnim koszyku 1,27 produktu, dlatego warto omówić z prowadzącym jego zmianę. Wyniki są oparte na małej próbie (353 użytkowników), więc mogą być zaszumione. Dalej zamierzam wydzielić zbiór walidacyjny z train i na nim dobrać parametry (n_neighbors, recency_decay, max_seeds), a nie dobierać ich na zbiorze testowym, żeby ocena była uczciwa. Rozważę też rekomendacje zapasowe oparte na popularności w kategorii.
+Blokuje nas: Konieczność dalszej optymalizacji modelu, aby zwiększyć Precision@5 z 3,4% do 10%. Musimy przetestować kolejne metody rekomendacji i poprawić ranking produktów. Jeśli osiągnięcie 10% okaże się nierealne, rozważymy obniżenie progu sukcesu na podstawie wyników testów.
 
-[Volodymyr Poleshko]
-
+04.11:
 Pobrałem i przygotowałem dane Retailrocket, podzieliłem je na zbiory train/test w scripts/prepare_evaluation_data.py. Zaimplementowałem model bazowy (Top Popular Products) oraz Item-based KNN z mechanizmem Popularity Fallback. Dodałem obliczanie metryk Precision@5 i Macro-F1@5 oraz porównałem oba algorytmy. Model KNN osiągnął poprawę Macro-F1@5 o około 126% względem Baseline. Zaktualizowałem również kryteria sukcesu w Karta-tematu.md.
 
 Na następne zajęcia chcę zrobić: Przeprowadzę dalszą optymalizację modelu KNN i sprawdzę różne parametry, aby poprawić Precision@5.
 
 Planuję stworzyć krótki formularz dla nowych użytkowników, który pozwoli poznać ich preferencje i zainteresowania. Dzięki temu nasz model będzie mógł generować spersonalizowane rekomendacje już od pierwszej wizyty, nawet bez historii zakupów.
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
-Antoni Przyłuski:
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[Antoni Przyłuski:]
+
+05.11
 co zrobiłem: wraz z drużyną przymyślałem plan działania aplikacji według działania algorytmu item-based KNN - analizuje historię użytkownika i znajduje produkty podobne do tych, które wcześniej przeglądał lub kupował. Podobieństwo między produktami oblicza za pomocą podobieństwa cosinusowego, a następnie wybiera te z najwyższymi wynikami. Jeśli nie znajdzie 5 odpowiednich produktów, uzupełnia listę najpopularniejszymi produktami (Popularity Fallback).
+
+Co zrobiłem:
+
+Wspólnie z zespołem opracowałem koncepcję działania systemu rekomendacji produktów.
+
+Przeanalizowałem sposób działania Item-based KNN i wykorzystanie historii użytkownika do dobierania podobnych produktów.
+
+Opisałem proces generowania 5 rekomendacji oraz uzupełniania ich popularnymi produktami (Popularity Fallback).
+
+Wnioski i dalsze kroki:
+Największy wzrost dało zaprzestanie wykluczania obejrzanych produktów oraz wprowadzenie wag zdarzeń. Mała poprawa na początku wynikała więc głównie z błędów w konstrukcji modelu i oceny, a nie z samej metody KNN. Próg 10% Precision@5 jest prawdopodobnie nierealistyczny przy średnim koszyku 1,27 produktu, dlatego warto omówić z prowadzącym jego zmianę. Wyniki są oparte na małej próbie (353 użytkowników), więc mogą być zaszumione. Dalej zamierzam wydzielić zbiór walidacyjny z train i na nim dobrać parametry (n_neighbors, recency_decay, max_seeds), a nie dobierać ich na zbiorze testowym, żeby ocena była uczciwa. Rozważę też rekomendacje zapasowe oparte na popularności w kategorii.
 
 
 
