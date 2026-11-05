@@ -53,21 +53,33 @@ pandas, numpy, scikit-learn, matplotlib, nootebook, docker, react, JavaScript, C
 
 ## 8. Kryterium sukcesu
 
-- Metryka i próg: ilośc wybranych produktów pasujących do historii wyszukiwania, top najlepszych do tego pasujących zwróconych przez system
-- Punkt odniesienia (prosta metoda, z którą porównacie wynik): Klasyczne wyszukiwanie słów kluczowych, wybrane produkty np. z Bazy danych sql plecenia
-LIKE
+**Metryka główna:** **Precision\@5** – określa, ile spośród pięciu rekomendowanych produktów odpowiada późniejszym zakupom użytkownika.
 
-Metryka: Precision@5 - to metryka, która pokazuje, ile spośród pięciu rekomendowanych produktów jest trafnych. Będziemy porównywać rekomendacje systemu z rzeczywistymi zakupami użytkowników. Dzięki temu sprawdzimy skuteczność naszego algorytmu.
+**Próg sukcesu:** Precision\@5 ≥ 10%.
 
-Próg sukcesu: Precision@5 ≥ 10%.
+**Metryka porównawcza:** Macro-F1\@5 – średnia wartość F1\@5 obliczona dla wszystkich ocenianych użytkowników.
 
-System będzie generował 5-8 rekomendowanych produktów dla użytkownika. Sprawdzimy, ile z nich faktycznie znalazło się w jego późniejszych zakupach.
+**Punkt odniesienia (Baseline):** Prosty algorytm rekomendujący najpopularniejsze produkty (Top Popular Products), niewykorzystujący uczenia maszynowego.
 
-Punkt odniesienia: Prosty system rekomendujący najpopularniejsze produkty. Nasz algorytm powinien osiągać lepszy wynik niż ta metoda.
+**Dodatkowy próg sukcesu:** Model Item-based KNN z mechanizmem Popularity Fallback powinien osiągnąć Macro-F1\@5 wyższe od Baseline o co najmniej 0,005.
 
-Jeśli użytkownik nie ma jeszcze historii zakupów, przed dokonaniem pierwszego zakupu wypełni krótką ankietę, w której zadamy mu kilka pytań dotyczących jego zainteresowań i preferencji. Dzięki temu system będzie mógł lepiej zrozumieć, czego użytkownik szuka, i zaproponować mu odpowiednie produkty.
+**Macro-F1\@5(KNN) − Macro-F1\@5(Baseline) ≥ 0,005**
 
-Gdy użytkownik zacznie dokonywać zakupów, system będzie analizował jego historię zakupową i na jej podstawie stopniowo ulepszał rekomendacje, aby były bardziej trafne i dostosowane do jego potrzeb.
+**Wstępne wyniki porównania:**
+
+| Metryka      | Baseline | KNN + Fallback |
+| ------------ | -------- | -------------- |
+| Precision\@5 | 0,0045   | 0,0102         |
+| Macro-F1\@5  | 0,0054   | 0,0122         |
+
+Liczba ocenianych użytkowników: **353**.
+
+**Uzyskana poprawa Macro-F1@5 wynosi +0,0068 (około 126%) względem Baseline.** Dodatkowy próg został spełniony we wstępnych testach, natomiast główny próg Precision@5 ≥ 10% nie został jeszcze osiągnięty.
+
+**Rekomendacje dla nowych użytkowników:** Jeśli użytkownik nie ma historii zakupów, wypełni krótką ankietę dotyczącą swoich zainteresowań i preferencji. Wraz z pojawianiem się kolejnych zakupów system będzie analizował historię użytkownika i dostosowywał rekomendacje.
+
+**Zobowiązanie zespołu:** Zobowiązujemy się do dalszego doskonalenia modelu oraz potwierdzenia wyników na niezależnym zbiorze testowym.
+
 
 ## 9. Zakres minimalny (co powstanie na pewno)
 
