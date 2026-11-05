@@ -1,3 +1,29 @@
+Sprinty binty
+
+Arsenii Voron: 
+Wizualizacja i analiza datasetu (EDA)
+
+Co myślałem:
+Zanim zacznę budować system rekomendacji, chciałem zrozumieć dane z datasetu Retailrocket. Zastanawiałem się, czy dane nadają się do filtrowania kolaboratywnego (item-based CF / KNN), jak bardzo są rzadkie i czy będzie potrzebna rekomendacja zapasowa dla nowych użytkowników. Uznałem, że najszybciej zobaczę to na wykresach w matplotlib w notebooku Jupyter.
+
+Co zrobiłem:
+- Stworzyłem notebook notebooks/02_visual_eda.ipynb, który wczytuje pliki CSV bezpośrednio z data/raw (bez bazy danych).
+- Przeanalizowałem tabelę events: typy zdarzeń (view, addtocart, transaction), lejek zakupowy, aktywność w czasie (dni, godziny, dni tygodnia).
+- Zbadałem rozkład aktywności użytkowników i popularności produktów (długi ogon) oraz rzadkość macierzy użytkownik x produkt.
+- Przeanalizowałem zakupy: wielkość koszyka, konwersję oraz czas od pierwszego wyświetlenia do zakupu.
+- Sprawdziłem drzewo kategorii (category_tree) i właściwości produktów (item_properties, ok. 20 mln wierszy), w tym pokrycie produktów kategoriami.
+
+Jaki wynik otrzymałem:
+- Dane obejmują okres od 3.05.2015 do 18.09.2015: 2,76 mln zdarzeń, 1,41 mln użytkowników i 235 tys. produktów.
+- Macierz użytkownik x produkt jest bardzo rzadka (gęstość ok. 0,0006%). 71% użytkowników ma tylko jedno zdarzenie, a tylko 20,5% oglądało co najmniej dwa różne produkty. Do filtrowania kolaboratywnego nadaje się więc tylko część danych (ok. 406 tys. użytkowników z co najmniej 2 zdarzeniami, czyli 64% zdarzeń).
+- Zakupów jest mało: 17,7 tys. transakcji, 11,7 tys. kupujących, średni koszyk to 1,27 produktu. Ocena modelu wyłącznie na zakupach byłaby zaszumiona, dlatego warto uwzględnić też addtocart.
+- 78% zakupów następuje w ciągu godziny od pierwszego wyświetlenia produktu, więc ostatnia historia użytkownika jest ważniejsza niż długa.
+- Popularność produktów ma silny długi ogon, więc potrzebna będzie rekomendacja zapasowa (popularne produkty lub popularne w kategorii) dla nowych użytkowników.
+- 78,8% produktów ze zdarzeń ma przypisaną kategorię, więc kategorie można wykorzystać jako dodatkową informację o produkcie.
+
+Wnioski i dalsze kroki:
+Dane nadają się do item-based CF, ale trzeba odfiltrować użytkowników z jednym zdarzeniem i dodać rekomendacje zapasowe. Podział na zbiór treningowy i testowy zrobię według czasu, a nie losowo. Jako punkt wyjścia dla wag zdarzeń przyjmę: view = 1, addtocart = 3, transaction = 5.
+    
 [Volodymyr Poleshko]
 
 Pobrałem i przygotowałem dane Retailrocket, podzieliłem je na zbiory train/test w scripts/prepare_evaluation_data.py. Zaimplementowałem model bazowy (Top Popular Products) oraz Item-based KNN z mechanizmem Popularity Fallback. Dodałem obliczanie metryk Precision@5 i Macro-F1@5 oraz porównałem oba algorytmy. Model KNN osiągnął poprawę Macro-F1@5 o około 126% względem Baseline. Zaktualizowałem również kryteria sukcesu w Karta-tematu.md.
