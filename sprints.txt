@@ -1,1 +1,16 @@
-Sprinty binty
+[Volodymyr Poleshko]
+
+Pobrałem i przygotowałem dane Retailrocket, podzieliłem je na zbiory train/test w scripts/prepare_evaluation_data.py. Zaimplementowałem model bazowy (Top Popular Products) oraz Item-based KNN z mechanizmem Popularity Fallback. Dodałem obliczanie metryk Precision@5 i Macro-F1@5 oraz porównałem oba algorytmy. Model KNN osiągnął poprawę Macro-F1@5 o około 126% względem Baseline. Zaktualizowałem również kryteria sukcesu w Karta-tematu.md.
+
+Na następne zajęcia chcę zrobić: Przeprowadzę dalszą optymalizację modelu KNN i sprawdzę różne parametry, aby poprawić Precision@5.
+
+Planuję stworzyć krótki formularz dla nowych użytkowników, który pozwoli poznać ich preferencje i zainteresowania. Dzięki temu nasz model będzie mógł generować spersonalizowane rekomendacje już od pierwszej wizyty, nawet bez historii zakupów.
+
+
+
+
+
+
+
+
+**Zobowiązanie zespołu:** Zobowiązujemy się do dalszego doskonalenia modelu oraz potwierdzenia wyników na niezależnym zbiorze testowym.
