@@ -76,6 +76,17 @@ Liczba ocenianych użytkowników: **353**.
 
 **Uzyskana poprawa Macro-F1@5 wynosi +0,0068 (około 126%) względem Baseline.** Dodatkowy próg został spełniony we wstępnych testach, natomiast główny próg Precision@5 ≥ 10% nie został jeszcze osiągnięty.
 
+NOWE WYNIKI - PORÓWNANIE
+
+| Metryka      | Baseline | KNN + Fallback |
+| ------------ | -------- | -------------- |
+| Precision\@5 | 0,0079   | 0,0340         |
+| Macro-F1\@5  | 0,0091   | 0,0506         |
+
+Nowa poprawa Macro-F1@5 wynosi +0.0415 (+460%) . Precision@5 wzrosło z 0.79% do 3.40% (+330%)
+Dodatkowy próg Macro-F1@5 >= 0.005 został spełniony Główny próg precision@5 nie został jeszcze osiągnięty.
+
+
 **Rekomendacje dla nowych użytkowników:** Jeśli użytkownik nie ma historii zakupów, wypełni krótką ankietę dotyczącą swoich zainteresowań i preferencji. Wraz z pojawianiem się kolejnych zakupów system będzie analizował historię użytkownika i dostosowywał rekomendacje.
 
 **Zobowiązanie zespołu:** Zobowiązujemy się do dalszego doskonalenia modelu oraz potwierdzenia wyników na niezależnym zbiorze testowym.
