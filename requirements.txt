@@ -8,3 +8,5 @@ psycopg[binary]>=3.1
 python-dotenv
 kagglehub
 jupyterlab
+sentence-transformers
+pgvector

@@ -15,10 +15,19 @@ def main():
     parser.add_argument("--data-dir", type=Path, default=Path("data/processed"))
     parser.add_argument("--users", type=int, default=5000, help="evaluation sample size, 0 = all users")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--split",
+        choices=["test", "validation"],
+        default="test",
+        help="validation = train_final.csv / validation.csv (for tuning parameters), test = train.csv / test.csv",
+    )
     args = parser.parse_args()
 
-    train = pd.read_csv(args.data_dir / "train.csv")
-    test = pd.read_csv(args.data_dir / "test.csv")
+    train_file, test_file = (
+        ("train.csv", "test.csv") if args.split == "test" else ("train_final.csv", "validation.csv")
+    )
+    train = pd.read_csv(args.data_dir / train_file)
+    test = pd.read_csv(args.data_dir / test_file)
 
     actual = test.groupby("user_id")["product_id"].apply(set).to_dict()
 
