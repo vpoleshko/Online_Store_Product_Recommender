@@ -1,131 +1,115 @@
-
 import numpy as np
 import pandas as pd
 
 from scipy.sparse import csr_matrix
-from sklearn.neighbors import NearestNeighbors
-
-EVENT_WEIGHTS = {"view": 1.0, "addtocart": 3.0, "transaction": 5.0}
+from sklearn.preprocessing import normalize
 
 
 class ItemKNN:
+    """Item-based collaborative filtering (cosine k-NN between products).
+
+    Expects a user x product table with columns
+    user_id, product_id, n_orders, last_order_number.
+    """
+
     def __init__(
         self,
         n_neighbors=20,
         max_items=20000,
         recency_decay=0.9,
         max_seeds=30,
-        event_weights=None,
+        chunk_size=500,
     ):
         self.n_neighbors = n_neighbors
         self.max_items = max_items
         self.recency_decay = recency_decay
         self.max_seeds = max_seeds
-        self.event_weights = event_weights or EVENT_WEIGHTS
+        self.chunk_size = chunk_size
 
-    def fit(self, train):
-        events = train[train["event"].isin(self.event_weights)].copy()
-        events["weight"] = events["event"].map(self.event_weights)
-
+    def fit(self, train, history_users=None):
         self.popular_items = (
-            train[train["event"] == "transaction"]
-            .groupby("itemid")
-            .size()
+            train.groupby("product_id")["n_orders"]
+            .sum()
             .sort_values(ascending=False)
             .index.tolist()
         )
 
-        popular = (
-            events.groupby("itemid")["visitorid"]
-            .nunique()
-            .nlargest(self.max_items)
-            .index
-        )
+        top = set(self.popular_items[: self.max_items])
+        pairs = train[train["product_id"].isin(top)]
 
-        events = events[events["itemid"].isin(popular)]
-
-        interactions = (
-            events.groupby(["visitorid", "itemid"], as_index=False)["weight"]
-            .max()
-        )
-
-        user_codes, users = pd.factorize(interactions["visitorid"])
-        item_codes, items = pd.factorize(interactions["itemid"])
+        user_codes, users = pd.factorize(pairs["user_id"])
+        item_codes, items = pd.factorize(pairs["product_id"])
 
         self.items = np.asarray(items)
-        self.item_to_idx = {item: i for i, item in enumerate(self.items)}
+        self.item_to_idx = {int(item): i for i, item in enumerate(self.items)}
 
-        self.matrix = csr_matrix(
+        matrix = csr_matrix(
             (
-                interactions["weight"].to_numpy(dtype=np.float32),
+                np.log1p(pairs["n_orders"].to_numpy(dtype=np.float32)),
                 (item_codes, user_codes),
             ),
             shape=(len(items), len(users)),
         )
+        matrix = normalize(matrix, norm="l2", axis=1).tocsr()
 
-        self.model = NearestNeighbors(
-            metric="cosine",
-            algorithm="brute",
-            n_neighbors=min(self.n_neighbors + 1, len(items)),
-        )
-        self.model.fit(self.matrix)
+        self._build_neighbors(matrix)
+        self._build_history(train, history_users)
 
-        history = train.sort_values("timestamp")
-
-        self.user_history = (
-            history.groupby("visitorid")["itemid"].apply(list).to_dict()
-        )
-
-        self.user_purchased = (
-            train[train["event"] == "transaction"]
-            .groupby("visitorid")["itemid"]
-            .apply(set)
-            .to_dict()
-        )
-
-        print(f"KNN trained on {len(items)} items")
+        print(f"KNN trained on {len(items)} products")
 
         return self
 
+    def _build_neighbors(self, matrix):
+        n_items = matrix.shape[0]
+        k = min(self.n_neighbors + 1, n_items)
+
+        self.neighbor_idx = np.zeros((n_items, k), dtype=np.int32)
+        self.neighbor_sim = np.zeros((n_items, k), dtype=np.float32)
+
+        matrix_t = matrix.T.tocsr()
+
+        for start in range(0, n_items, self.chunk_size):
+            stop = min(start + self.chunk_size, n_items)
+            sims = (matrix[start:stop] @ matrix_t).toarray()
+
+            top = np.argpartition(-sims, k - 1, axis=1)[:, :k]
+            top_sims = np.take_along_axis(sims, top, axis=1)
+
+            order = np.argsort(-top_sims, axis=1)
+            self.neighbor_idx[start:stop] = np.take_along_axis(top, order, axis=1)
+            self.neighbor_sim[start:stop] = np.take_along_axis(top_sims, order, axis=1)
+
+    def _build_history(self, train, history_users):
+        history = train
+        if history_users is not None:
+            history = history[history["user_id"].isin(set(history_users))]
+
+        history = history.sort_values(
+            ["user_id", "last_order_number"], ascending=[True, False]
+        )
+
+        self.user_history = (
+            history.groupby("user_id")["product_id"].apply(list).to_dict()
+        )
+
     def recommend(self, user_id, k=5):
-        history = self.user_history.get(user_id, [])
-        purchased = self.user_purchased.get(user_id, set())
-
-        recent = list(dict.fromkeys(reversed(history)))[: self.max_seeds]
-
-        seed_indices = []
-        seed_weights = []
-        weight = 1.0
-        for item in recent:
-            if item in self.item_to_idx:
-                seed_indices.append(self.item_to_idx[item])
-                seed_weights.append(weight)
-            weight *= self.recency_decay
+        recent = self.user_history.get(user_id, [])[: self.max_seeds]
 
         scores = {}
+        weight = 1.0
 
-        if seed_indices:
-            distances, indices = self.model.kneighbors(
-                self.matrix[seed_indices], return_distance=True
-            )
+        for product in recent:
+            idx = self.item_to_idx.get(int(product))
 
-            for recency_weight, neighbor_ids, neighbor_distances in zip(
-                seed_weights, indices, distances
-            ):
-                for idx, distance in zip(neighbor_ids, neighbor_distances):
-                    item = int(self.items[idx])
-
-                    if item in purchased:
+            if idx is not None:
+                for neighbor, sim in zip(self.neighbor_idx[idx], self.neighbor_sim[idx]):
+                    if sim <= 0:
                         continue
 
-                    similarity = max(0.0, 1.0 - float(distance))
+                    item = int(self.items[neighbor])
+                    scores[item] = scores.get(item, 0.0) + float(sim) * weight
 
-                    if similarity <= 0:
-                        continue
-
-                    scores[item] = (
-                        scores.get(item, 0.0) + similarity * recency_weight
-                    )
+            weight *= self.recency_decay
 
         recommendations = sorted(
             scores, key=lambda item: (-scores[item], item)
@@ -137,7 +121,7 @@ class ItemKNN:
             for item in self.popular_items:
                 item = int(item)
 
-                if item in purchased or item in selected:
+                if item in selected:
                     continue
 
                 recommendations.append(item)

@@ -27,7 +27,7 @@ Dane nadają się do item-based CF, ale trzeba odfiltrować użytkowników z jed
 Analiza wyników porównania modeli i poprawa modelu KNN
 
 Co myślałem:
-Pierwsze porównanie modeli dało słaby wynik: Precision@5 wyniosło 0,0102 dla KNN wobec 0,0045 dla modelu bazowego, a poprawa Macro-F1@5 to tylko +0,0068 (kryteria: Precision@5 >= 10% i poprawa F1 >= 0,05). Zastanawiałem się, dlaczego poprawa jest tak mała. Przeanalizowałem kod i wnioski z EDA i doszedłem do następujących przyczyn:
+Pierwsze porównanie modeli dało słaby wynik: Precision@5 wyniosło 0,0102 dla KNN wobec 0,0045 dla modelu bazowego, a poprawa Macro-F1@5 to tylko +0,0068 (kryteria z karty tematu: Precision@5 >= 10% i poprawa Macro-F1@5 >= 0,005). Zastanawiałem się, dlaczego poprawa jest tak mała. Przeanalizowałem kod i wnioski z EDA i doszedłem do następujących przyczyn:
 1. Model nie rekomendował produktów, które użytkownik już oglądał. Tymczasem z EDA wiemy, że 78% zakupów następuje w ciągu godziny od pierwszego wyświetlenia tego samego produktu, więc odrzucaliśmy właśnie najbardziej prawdopodobne trafienia.
 2. Wszystkie zdarzenia miały tę samą wagę (view = addtocart = transaction), choć dodanie do koszyka i zakup mówią o zainteresowaniu znacznie więcej niż samo wyświetlenie.
 3. Do modelu trafiało tylko 5000 najpopularniejszych produktów z 235 tys., a kupowane produkty często pochodzą z długiego ogona.
@@ -45,10 +45,40 @@ Jaki wynik otrzymałem (353 użytkowników, k = 5):
 - Precision@5: Baseline 0,0079, KNN 0,0340 (wcześniej KNN 0,0102).
 - Macro-F1@5: Baseline 0,0091, KNN 0,0506 (wcześniej 0,0122).
 - Poprawa Macro-F1@5 względem modelu bazowego: +0,0415 (wcześniej +0,0068), czyli KNN jest teraz ponad 5 razy lepszy w F1 i ok. 4 razy w Precision.
-- Kryteria nadal niespełnione: Precision@5 >= 10% (mamy 3,4%) oraz poprawa F1 >= 0,05 (mamy 0,0415, brakuje ok. 0,009).
+- Dodatkowy próg (poprawa Macro-F1@5 >= 0,005) jest spełniony, natomiast główny próg Precision@5 >= 10% nadal nie (mamy 3,4%).
 
 Wnioski i dalsze kroki:
 Największy wzrost dało zaprzestanie wykluczania obejrzanych produktów oraz wprowadzenie wag zdarzeń. Mała poprawa na początku wynikała więc głównie z błędów w konstrukcji modelu i oceny, a nie z samej metody KNN. Próg 10% Precision@5 jest prawdopodobnie nierealistyczny przy średnim koszyku 1,27 produktu, dlatego warto omówić z prowadzącym jego zmianę. Wyniki są oparte na małej próbie (353 użytkowników), więc mogą być zaszumione. Dalej zamierzam wydzielić zbiór walidacyjny z train i na nim dobrać parametry (n_neighbors, recency_decay, max_seeds), a nie dobierać ich na zbiorze testowym, żeby ocena była uczciwa. Rozważę też rekomendacje zapasowe oparte na popularności w kategorii.
+
+Zmiana datasetu: z Retailrocket na Instacart Market Basket Analysis
+
+Co myślałem:
+Po analizie danych i wyników modelu doszedłem do wniosku, że dataset Retailrocket nie pasuje do tego, co chcemy zbudować, czyli sklepu, w którym użytkownik uzupełnia koszyk, a model dopiero wtedy podpowiada kolejne produkty. Powody:
+1. Produkty w Retailrocket są zanonimizowane: mają tylko numery id i zaszyfrowane właściwości, bez nazw i zdjęć. Nie da się na tym zrobić czytelnego katalogu produktów ani frontendu, w którym użytkownik wybiera rzeczy do koszyka. Tekstowe embeddingi produktów też nie mają sensu, bo nie ma tekstu.
+2. Nie ma prawdziwych koszyków. Średni zakup to 1,27 produktu, więc nie da się uczciwie sprawdzić, czy model dobrze uzupełnia koszyk. To także powód, dla którego próg Precision@5 >= 10% jest tu praktycznie nieosiągalny (maksymalne możliwe Precision@5 to ok. 0,2).
+3. Dane są bardzo rzadkie: 71% użytkowników ma tylko jedno zdarzenie, a tylko 20,5% oglądało co najmniej dwa różne produkty. Ocenialiśmy model na zaledwie 353 użytkownikach, więc wyniki były mocno zaszumione.
+Instacart ma prawdziwe zamówienia (koszyki z wieloma produktami), nazwy produktów, alejki i działy oraz około 3,4 mln zamówień od ok. 200 tys. użytkowników i ok. 49,7 tys. produktów. To pasuje do pomysłu z koszykiem i pozwala ocenić model na tysiącach użytkowników.
+
+Co zrobiłem:
+- Przerobiłem bazę danych: nowy schemat (departments, aisles, products, orders, order_products_prior, order_products_train oraz widoki v_products i v_order_products), nowe skrypty pobierania i importu danych z Kaggle.
+- Przepisałem scripts/prepare_evaluation_data.py: do treningu idą wszystkie wcześniejsze zamówienia (prior), a jako prawdę do testu bierzemy ostatnie zamówienie każdego użytkownika. Dane Instacart nie mają dat, więc podział jest po zamówieniach, a nie po czasie.
+- Przepisałem model ItemKNN: wagi oparte na liczbie zamówień danego produktu przez użytkownika, ważenie świeżością, popularność jako rozwiązanie zapasowe. Dodałem dodatkowy punkt odniesienia "Repeat" (najczęściej kupowane produkty użytkownika), bo w Instacart większość zakupów to powtórki i chcemy wiedzieć, ile model dodaje ponad samo powtarzanie.
+- Przerobiłem notebooki (EDA danych, EDA w SQL, porównanie modeli), README i dodałem testy modelu.
+- Pobrałem dataset z Kaggle (kagglehub działa bez tokena), uruchomiłem import danych, przygotowanie zbiorów i porównanie modeli na prawdziwych danych Instacart oraz notebook z analizą danych.
+
+Jaki wynik otrzymałem:
+Dane Instacart: 3,42 mln zamówień, 206 tys. użytkowników, 49,7 tys. produktów, 32,4 mln pozycji w zamówieniach "prior". Średni koszyk to 10,1 produktu (mediana 8), a 59% pozycji to powtórne zakupy. Gęstość macierzy użytkownik x produkt to ok. 0,13% (dla Retailrocket było 0,0006%). 59,9% produktów z ostatniego zamówienia użytkownik już wcześniej kupował, a 40,1% to produkty nowe dla niego.
+
+Porównanie modeli (5000 losowych użytkowników, k = 5, jedno uruchomienie):
+- Precision@5: Baseline (popularne) 0,0947, Repeat (najczęściej kupowane przez użytkownika) 0,3536, KNN 0,2071.
+- Macro-F1@5: Baseline 0,0564, Repeat 0,2399, KNN 0,1451.
+- Poprawa Macro-F1@5 KNN względem Baseline: +0,0887, czyli oba progi z karty tematu są spełnione (Precision@5 >= 10% oraz poprawa >= 0,005).
+- Ważna uwaga: prosty model Repeat jest wyraźnie lepszy od naszego KNN. Oznacza to, że obecny KNN nie wykorzystuje w pełni najsilniejszego sygnału w tych danych, czyli częstości powtórnych zakupów, bo wagi produktów z historii zależą tylko od świeżości, a nie od częstości.
+
+Wyniki z Retailrocket (Precision@5 = 0,034 dla KNN, +0,0415 Macro-F1@5 względem Baseline) zostają w tym raporcie jako wyniki z pierwszego datasetu i nie są porównywalne z Instacart.
+
+Ryzyka i wnioski:
+Instacart nie ma zdjęć produktów (frontend będzie używał ikon lub kolorów działów), dotyczy tylko produktów spożywczych i nie ma dat zakupów. Uważam jednak, że prawdziwe koszyki i nazwy produktów są ważniejsze dla naszego celu. Wynik jest z jednego uruchomienia i jednej próbki użytkowników, więc nie ma jeszcze przedziałów ufności (można je policzyć w notebooku model_comparison). Dalsze kroki: poprawić KNN tak, aby uwzględniał częstość zakupów (i porównać z Repeat), zaktualizować kartę tematu (sekcja "Dane" i wyniki wstępne) po uzgodnieniu z zespołem, a następnie zbudować backend i frontend z koszykiem.
 
 [Volodymyr Poleshko]
 

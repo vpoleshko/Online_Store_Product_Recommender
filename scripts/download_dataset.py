@@ -4,12 +4,14 @@ from pathlib import Path
 
 import kagglehub
 
-DATASET = "retailrocket/ecommerce-dataset"
+DATASET = "psparks/instacart-market-basket-analysis"
 FILES = [
-    "events.csv",
-    "item_properties_part1.csv",
-    "item_properties_part2.csv",
-    "category_tree.csv",
+    "departments.csv",
+    "aisles.csv",
+    "products.csv",
+    "orders.csv",
+    "order_products__prior.csv",
+    "order_products__train.csv",
 ]
 
 
