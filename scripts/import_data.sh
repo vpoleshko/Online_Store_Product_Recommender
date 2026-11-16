@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 . "$(dirname "$0")/_common.sh"
 
-for f in events.csv item_properties_part1.csv item_properties_part2.csv category_tree.csv; do
+for f in departments.csv aisles.csv products.csv orders.csv order_products__prior.csv order_products__train.csv; do
     if [ ! -f "$RAW_DIR/$f" ]; then
         echo "Missing $RAW_DIR/$f - run scripts/download_data.sh first"
         exit 1
