@@ -17,8 +17,8 @@ data/processed/ train/test tables built from raw (git-ignored)
 notebooks/      Jupyter notebooks (EDA, model comparison)
 models/         trained models (git-ignored)
 src/recommender ML: item-based CF / KNN, popularity baseline, metrics
-src/api         backend API
-frontend/       UI
+src/api         FastAPI backend (search, recommendations, serves frontend/)
+frontend/       UI (plain HTML/CSS/JS)
 tests/          pytest tests
 scripts/        sh scripts (run from Git Bash / WSL / Linux / macOS)
 ```
@@ -41,6 +41,24 @@ python3 -m scripts.compare_models            # Baseline vs Repeat vs KNN
 
 jupyter lab notebooks/
 ```
+
+### Run the shop (backend + frontend)
+
+Needs the database with embeddings (`notebooks/03_embeddings.ipynb`) and `data/processed/train.csv`.
+
+```bash
+scripts/run_api.sh        # http://127.0.0.1:8765  (start-up takes ~1 min: trains KNN, loads the model)
+```
+
+The page searches products by text embeddings, you add products to the cart, and after pressing **Buy** the app
+shows what else to buy (item-based KNN on past orders + embedding similarity).
+Use `127.0.0.1` rather than `localhost` if another service on your machine listens on the same port.
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/search?q=...` | semantic product search (pgvector) |
+| `GET /api/popular` | most ordered products |
+| `POST /api/recommend` | `{"product_ids": [...], "k": 10}` -> recommendations for the cart |
 
 If the database volume was created for the old dataset, recreate it first: `scripts/reset_db.sh`
 (schema is only applied on an empty volume).

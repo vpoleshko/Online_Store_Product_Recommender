@@ -10,3 +10,5 @@ kagglehub
 jupyterlab
 sentence-transformers
 pgvector
+fastapi
+uvicorn
