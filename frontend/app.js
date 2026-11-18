@@ -1,8 +1,28 @@
 const EMOJI = {
-  produce: "🥬", "dairy eggs": "🥛", snacks: "🍿", beverages: "🥤", frozen: "🧊",
-  pantry: "🥫", bakery: "🍞", "canned goods": "🥫", deli: "🥪", "dry goods pasta": "🍝",
-  household: "🧽", "meat seafood": "🥩", breakfast: "🥣", "personal care": "🧴",
-  babies: "🍼", international: "🌍", alcohol: "🍷", pets: "🐶", bulk: "📦",
+  Meat: "🥩",
+  Seafood: "🐟",
+  Fruit: "🍎",
+  Vegetables: "🥦",
+  Produce: "🥬",
+  Dairy: "🥛",
+  Eggs: "🥚",
+  Bakery: "🍞",
+  Beverages: "🥤",
+  Snacks: "🍿",
+  Breakfast: "🥣",
+  "Frozen Foods": "🧊",
+  Pantry: "🥫",
+  "Canned Goods": "🥫",
+  Deli: "🥪",
+  "Pasta & Grains": "🍝",
+  Household: "🧽",
+  "Personal Care": "🧴",
+  "Baby Products": "🍼",
+  "Pet Supplies": "🐶",
+  "International Foods": "🌍",
+  Alcohol: "🍷",
+  "Bulk Foods": "📦",
+  "Meat & Seafood": "🍽️"
 };
 
 const TAGS = {
@@ -51,12 +71,15 @@ function el(tag, className, text) {
 function renderCard(product, { tag } = {}) {
   const card = el("article", "card");
 
-  const tile = el("div", "tile", EMOJI[product.department] || "🛒");
-  tile.style.background = `hsl(${hue(product.department)} 70% 50% / 0.18)`;
+  const category = product.category || product.department || "Other";
+
+  const tile = el("div", "tile", EMOJI[category] || "🛒");
+  tile.style.background = `hsl(${hue(category)} 70% 50% / 0.18)`;
   card.append(tile);
 
   card.append(el("div", "name", product.name));
-  card.append(el("div", "meta", `${product.aisle} · ${product.department}`));
+  card.append(el("div", "meta", category));
+
   if (tag) card.append(el("div", "tag", tag));
   card.append(el("div", "spacer"));
 

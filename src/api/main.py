@@ -34,7 +34,18 @@ async def lifespan(app: FastAPI):
     engine = make_engine()
 
     products = pd.read_sql(
-        "SELECT product_id, product_name, aisle, department FROM raw.v_products", engine
+    """
+    SELECT
+        p.product_id,
+        p.product_name,
+        p.aisle,
+        p.department,
+        COALESCE(c.category, p.department) AS category
+    FROM raw.v_products p
+    LEFT JOIN app.product_categories c
+        ON p.product_id = c.product_id
+    """,
+    engine
     ).set_index("product_id")
 
     train = pd.read_csv(ROOT / "data/processed/train.csv")
@@ -64,6 +75,7 @@ def product_json(product_id, **extra):
         "name": row["product_name"],
         "aisle": row["aisle"],
         "department": row["department"],
+        "category": row["category"],
         **extra,
     }
 
