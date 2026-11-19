@@ -134,6 +134,10 @@ Opisałem proces generowania 5 rekomendacji oraz uzupełniania ich popularnymi p
 Wnioski i dalsze kroki:
 Największy wzrost dało zaprzestanie wykluczania obejrzanych produktów oraz wprowadzenie wag zdarzeń. Mała poprawa na początku wynikała więc głównie z błędów w konstrukcji modelu i oceny, a nie z samej metody KNN. Próg 10% Precision@5 jest prawdopodobnie nierealistyczny przy średnim koszyku 1,27 produktu, dlatego warto omówić z prowadzącym jego zmianę. Wyniki są oparte na małej próbie (353 użytkowników), więc mogą być zaszumione. Dalej zamierzam wydzielić zbiór walidacyjny z train i na nim dobrać parametry (n_neighbors, recency_decay, max_seeds), a nie dobierać ich na zbiorze testowym, żeby ocena była uczciwa. Rozważę też rekomendacje zapasowe oparte na popularności w kategorii.
 
+19.11
+Co zrobiliśmy: drużynowo doszliśmy od wniosku, że wybraliśmy niepoprawny dataset, zbyt skomplikowaną i metryka modelu pokazywała niepoprawne wyniki. Znaleźliśmy nową, w której metryka precision jest dwukrotnie lepsza od poprzedniej - mierząca do 20%.
+
+Przebudowaliśmy schemat bazy PostgreSQL, skrypty pobierania / wdrażania danych, Dodano zbiór walidacyjny oparty na zamówieniach użytkowników, dodaliśmy backend FastAPI z wyszukiwaniem, listą popularnych produktów i rekomendacji koszyka i frontend webowy. Zmieniono też tabele dzielącą produkty na bardziej szczegółowe kategorie z ikonami.
 
 
 **Zobowiązanie zespołu:** Zobowiązujemy się do dalszego doskonalenia modelu oraz potwierdzenia wyników na niezależnym zbiorze testowym.
