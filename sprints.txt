@@ -40,6 +40,25 @@ Dane nadają się do item-based CF, ale trzeba odfiltrować użytkowników z jed
 
 [Volodymyr Poleshko]
 
+18.11 – Uruchomienie aplikacji i rozwój systemu rekomendacji
+
+Co zrobiłem:
+
+- Skonfigurowałem połączenie backendu FastAPI z bazą danych i uruchomiłem aplikację internetową.
+- Wygenerowałem embeddingi produktów, umożliwiające wyszukiwanie semantyczne.
+- Poprawiłem klasyfikację produktów, rozdzielając m.in. mięso, ryby, nabiał i warzywa na osobne kategorie.
+- Poprawiłem wyświetlanie kategorii oraz ikon produktów na frontendzie.
+- Poprawiłem wyświetlanie kategorii oraz ikon produktów na frontendzie.
+
+Wyniki:
+- Precision@5 dla KNN: 20,71%.
+- Precision@5 dla Baseline: 9,47%.
+- Poprawa Macro-F1@5 względem Baseline: +0,0887.
+- Oba kryteria sukcesu określone w karcie tematu zostały spełnione.
+
+-----------------------------------------------------------------------------------------
+
+
 Odpowiedż na pytanie  Jak item-based KNN wybiera tych 5 produktów — w trzech zdaniach.
 
 Algorytm Item-based KNN analizuje historię użytkownika i znajduje produkty podobne do tych, które wcześniej przeglądał lub kupował. Podobieństwo między produktami oblicza za pomocą podobieństwa cosinusowego, a następnie wybiera te z najwyższymi wynikami. Jeśli nie znajdzie 5 odpowiednich produktów, uzupełnia listę najpopularniejszymi produktami (Popularity Fallback).
