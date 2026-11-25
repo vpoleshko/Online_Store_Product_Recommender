@@ -4,8 +4,12 @@ Personalized product recommendations for online stores.
 Dataset: [Instacart Market Basket Analysis](https://www.kaggle.com/datasets/psparks/instacart-market-basket-analysis)
 (original competition: https://www.kaggle.com/competitions/instacart-market-basket-analysis).
 
-Why Instacart: real baskets (orders with many products), real product names, aisles and departments. The previous
-dataset (Retailrocket) has anonymised items without names and only ~1.27 products per purchase.
+Why Instacart: real shopping baskets, real product names,
+aisles and departments, and historical purchase data.
+
+All current models and evaluation results presented
+in this project are based exclusively on the Instacart
+Market Basket Analysis dataset.
 
 ## Structure
 
