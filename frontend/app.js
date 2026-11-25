@@ -73,9 +73,27 @@ function renderCard(product, { tag } = {}) {
 
   const category = product.category || product.department || "Other";
 
-  const tile = el("div", "tile", EMOJI[category] || "🛒");
-  tile.style.background = `hsl(${hue(category)} 70% 50% / 0.18)`;
-  card.append(tile);
+  const tile = el("div", "tile");
+const imagePath = getProductImage(product);
+
+if (imagePath) {
+  const img = document.createElement("img");
+
+  img.src = imagePath;
+  img.alt = product.name;
+  img.loading = "lazy";
+
+  img.onerror = () => {
+    tile.replaceChildren();
+    tile.textContent = EMOJI[category] || "🛒";
+  };
+
+  tile.append(img);
+} else {
+  tile.textContent = EMOJI[category] || "🛒";
+}
+
+card.append(tile);
 
   card.append(el("div", "name", product.name));
   card.append(el("div", "meta", category));
