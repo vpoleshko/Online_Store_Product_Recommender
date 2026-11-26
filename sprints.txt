@@ -159,4 +159,32 @@ Co zrobiliśmy: drużynowo doszliśmy od wniosku, że wybraliśmy niepoprawny da
 Przebudowaliśmy schemat bazy PostgreSQL, skrypty pobierania / wdrażania danych, Dodano zbiór walidacyjny oparty na zamówieniach użytkowników, dodaliśmy backend FastAPI z wyszukiwaniem, listą popularnych produktów i rekomendacji koszyka i frontend webowy. Zmieniono też tabele dzielącą produkty na bardziej szczegółowe kategorie z ikonami.
 
 
+[Arsenii Voron:]
+
+Rekomendacje hybrydowe: sieć neuronowa + algorytmy + przepisy
+
+Co myślałem:
+Sam item-based KNN podpowiada głównie to, co ludzie i tak kupują najczęściej, a embeddingi tekstowe znajdują produkty podobne (zamienniki), a nie uzupełniające się. Pomyślałem, że dobry system powinien łączyć kilka źródeł kandydatów i pozwolić modelowi nauczyć się, któremu źródłu ufać, zamiast dobierać wagi ręcznie (poprzednio ważenie RRF z wagą 0,3 ustawiłem „na oko”). Drugi pomysł: po zakupie pokazać nie tylko listę produktów, ale też przepisy, które klient jest bliski ugotowania, razem z brakującymi składnikami.
+
+Co zrobiłem:
+1. Pobrałem zbiór Food.com (231 tys. przepisów, ok. 15 tys. różnych składników) i zapisałem go w PostgreSQL (tabele app.recipes, app.recipe_ingredients, app.ingredient_products).
+2. Powiązałem składniki z produktami sklepu: nazwa składnika jest kodowana tym samym modelem BAAI/bge-small-en-v1.5 co produkty, a następnie wybierany jest najbliższy produkt spożywczy. Pierwsza wersja (sama odległość embeddingów) dawała błędy (miód -> płatki „Honey Clusters”, czosnek -> pasta gochujang), ponieważ bge daje bardzo ściśnięte podobieństwa (0,72-0,81). Dodałem więc kontrolę leksykalną (słowa składnika muszą występować w nazwie produktu, kara za dodatkowe słowa) oraz małą listę synonimów. Po poprawce „butter” -> Unsalted Butter, „oil” -> Vegetable Oil.
+3. Zostawiłem tylko przepisy z oceną co najmniej 4,0 (min. 3 opinie), w których min. 80% składników da się kupić w sklepie: 66 765 przepisów. Sól, woda i pieprz traktowane są jako zapasy domowe.
+4. Wyszukiwanie przepisów dla koszyka to proste liczenie pokrycia składników (macierze rzadkie, ok. 2-4 ms), a nie embeddingi - jest szybsze i od razu wyjaśnia wynik („masz 3 z 6 składników”).
+5. Zbudowałem ranker LightGBM (LambdaRank). Kandydaci pochodzą z trzech źródeł: KNN współzakupów, sąsiedzi embeddingowi koszyka i produkty uzupełniające przepisy; cechy to m.in. wyniki i pozycje z każdego źródła, popularność, wspólna alejka/dział. Uczenie: prawdziwe koszyki Instacart - losowe 30-70% koszyka to „koszyk”, reszta jest do odgadnięcia (KNN trenowany tylko na wcześniejszych zamówieniach, więc nie ma wycieku danych).
+6. Frontend: po kliknięciu „Buy” użytkownik widzi rekomendowane produkty z uzasadnieniem („często kupowane z …”, „potrzebne do …”, „podobne do …”) oraz sekcję „Cook something with your order” z postępem składników, przyciskiem dodania brakujących produktów do koszyka i krokami przygotowania.
+
+Wynik (3000 koszyków testowych, nieużywanych w treningu):
+Popularne produkty: Precision@5 0,060 / NDCG@5 0,122
+KNN współzakupów: 0,070 / 0,135
+Podobieństwo embeddingów: 0,004 / 0,007
+KNN + embeddingi (RRF): 0,068 / 0,126
+Hybryda + ranker LightGBM: 0,081 / 0,166 (względnie +17% Precision@5 i +23% NDCG@5 względem samego KNN)
+
+Wnioski:
+- Embeddingi same w sobie prawie nic nie przewidują, bo koszyki Instacart zawierają produkty uzupełniające i powtórne zakupy, a nie zamienniki. Ich wartość to wyszukiwarka semantyczna oraz łączenie składników przepisów z produktami.
+- Cechy z przepisów praktycznie nie poprawiają metryki (Instacart nie zawiera informacji o gotowaniu według przepisu), więc przepisy są funkcją produktową, a nie zyskiem w metryce - nie twierdzimy inaczej.
+- Ranker preferuje popularne produkty (warzywa, owoce), bo to odzwierciedla realne zakupy. Filtrowanie „zamienników” (podobieństwo > 0,9) obniżało Precision@5 o ok. 10%, bo klienci naprawdę kupują kilka wariantów tego samego produktu; dlatego zastosowałem tylko łagodne reguły (maks. 3 produkty z jednej alejki, pominięcie niemal duplikatów), które kosztują ok. 1% Precision@5.
+- Ograniczenia: brak cen, dostępności i sezonowości w danych; przepisy są w języku angielskim i pasują do amerykańskiego katalogu Instacart.
+
 **Zobowiązanie zespołu:** Zobowiązujemy się do dalszego doskonalenia modelu oraz potwierdzenia wyników na niezależnym zbiorze testowym.

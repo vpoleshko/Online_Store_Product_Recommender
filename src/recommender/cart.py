@@ -1,5 +1,4 @@
 def copurchase_items(knn, product_ids, limit=50):
-    """Products most often bought together with the cart items (item-based KNN)."""
     cart = {int(p) for p in product_ids}
     scores = {}
 
@@ -21,10 +20,6 @@ def copurchase_items(knn, product_ids, limit=50):
 
 
 def fuse(copurchase, similar, k=10, similar_weight=0.3, rrf_k=60):
-    """Weighted reciprocal rank fusion of two ranked product lists.
-
-    Returns [(product_id, ["purchases" and/or "similar"]), ...].
-    """
     scores = {}
     sources = {}
 

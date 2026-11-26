@@ -24,12 +24,6 @@ def combine(parts: list) -> pd.DataFrame:
 
 
 def build_train_tables(raw: Path):
-    """User x product tables from `prior` orders.
-
-    train:       all prior orders (n_orders, last_order_number per user x product)
-    train_final: all prior orders except each user's last prior order
-    validation:  products of each user's last prior order (labels for tuning)
-    """
     orders = pd.read_csv(raw / "orders.csv", usecols=["order_id", "user_id", "order_number", "eval_set"])
 
     user_of = np.zeros(orders["order_id"].max() + 1, dtype="int32")
@@ -62,7 +56,6 @@ def build_train_tables(raw: Path):
 
 
 def build_test(raw: Path) -> pd.DataFrame:
-    """Products of each user's last order (the order labelled `train` in Instacart)."""
     orders = pd.read_csv(raw / "orders.csv", usecols=["order_id", "user_id", "eval_set"])
     last = orders[orders["eval_set"] == "train"][["order_id", "user_id"]]
     lines = pd.read_csv(raw / "order_products__train.csv", usecols=["order_id", "product_id"])

@@ -46,11 +46,27 @@
 
     <p class="muted" id="order-summary"></p>
 
-    <h3>You might also want to buy</h3>
+    <section id="pipeline" class="pipeline" hidden></section>
+
+    <h3 class="section-title">
+      <span class="badge badge-model">MODEL</span>
+      You might also want to buy
+    </h3>
+    <p class="muted section-note">Ranked by the LightGBM model. Each card shows where its signals came from.</p>
 
     <p id="order-status" class="muted" role="status"></p>
 
     <div id="recs" class="grid"></div>
+
+    <h3 id="recipes-title" class="section-title" hidden>
+      <span class="badge badge-rule">RULES</span>
+      Cook something with your order
+    </h3>
+    <p id="recipes-note" class="muted section-note" hidden>
+      Recipes are found by matching ingredients, not by the model.
+    </p>
+
+    <div id="recipes" class="recipes"></div>
   </dialog>
 
   <script src="product-images.js"></script>

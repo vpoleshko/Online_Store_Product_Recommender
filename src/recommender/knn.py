@@ -6,11 +6,6 @@ from sklearn.preprocessing import normalize
 
 
 class ItemKNN:
-    """Item-based collaborative filtering (cosine k-NN between products).
-
-    Expects a user x product table with columns
-    user_id, product_id, n_orders, last_order_number.
-    """
 
     def __init__(
         self,

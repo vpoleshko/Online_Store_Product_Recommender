@@ -9,6 +9,8 @@ data/processed/*
 
 models/*
 !models/.gitkeep
+!models/ranker.txt
+!models/ranker_metrics.json
 
 __pycache__/
 *.pyc
