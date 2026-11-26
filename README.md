@@ -19,8 +19,8 @@ db/sql/         SQL used by scripts (CSV import, indexes)
 data/raw/       downloaded CSVs (git-ignored)
 data/processed/ train/test tables built from raw (git-ignored)
 notebooks/      Jupyter notebooks (EDA, model comparison)
-models/         trained models (git-ignored)
-src/recommender ML: item-based CF / KNN, popularity baseline, metrics
+models/         product embeddings, LightGBM ranker (ranker.txt)
+src/recommender ML: item-based CF / KNN, popularity baseline, metrics, recipes, hybrid ranker
 src/api         FastAPI backend (search, recommendations, serves frontend/)
 frontend/       UI (plain HTML/CSS/JS)
 tests/          pytest tests
@@ -46,23 +46,72 @@ python3 -m scripts.compare_models            # Baseline vs Repeat vs KNN
 jupyter lab notebooks/
 ```
 
-### Run the shop (backend + frontend)
-
-Needs the database with embeddings (`notebooks/03_embeddings.ipynb`) and `data/processed/train.csv`.
+### One-command setup
 
 ```bash
-scripts/run_api.sh        # http://127.0.0.1:8765  (start-up takes ~1 min: trains KNN, loads the model)
+scripts/setup_venv.sh && source .venv/bin/activate
+scripts/setup_all.sh      # downloads data, fills the database, builds embeddings and recipes
+scripts/run_api.sh
 ```
 
-The page searches products by text embeddings, you add products to the cart, and after pressing **Buy** the app
-shows what else to buy (item-based KNN on past orders + embedding similarity).
+`setup_all.sh` can be re-run at any time: every step that is already done is skipped.
+The first run downloads about 1 GB, and computing the embeddings takes about 10 minutes on a CPU.
+
+### Run the shop (backend + frontend)
+
+Needs: the database with embeddings (`notebooks/03_embeddings.ipynb`), `data/processed/train.csv`,
+the recipe tables (see below) and `models/ranker.txt` (committed; without it a simple blend is used).
+
+```bash
+scripts/run_api.sh        # http://127.0.0.1:8765  (start-up takes ~1 min: trains KNN, loads the models)
+```
+
+The page searches products by text embeddings, you add products to the cart, and after pressing **Buy** the app shows
+what else to buy and which recipes the order is close to, with the missing ingredients one click from the cart.
 Use `127.0.0.1` rather than `localhost` if another service on your machine listens on the same port.
 
 | Endpoint | Description |
 |---|---|
-| `GET /api/search?q=...` | semantic product search (pgvector) |
+| `GET /api/search?q=...` | hybrid search: pgvector candidates re-ranked by embedding similarity, word match, exact/prefix name match and popularity (weights in `src/recommender/search.py`) |
 | `GET /api/popular` | most ordered products |
-| `POST /api/recommend` | `{"product_ids": [...], "k": 10}` -> recommendations for the cart |
+| `POST /api/recommend` | `{"product_ids": [...], "k": 10}` -> `{"products": [...with reasons], "recipes": [...]}` |
+
+### How the recommendation works
+
+```
+cart ─┬─ co-purchase KNN (what is bought together)     ─┐
+      ├─ embedding neighbours (what is similar)         ─┼─> candidates ─> LightGBM ranker ─> top-k + reasons
+      └─ recipes that the cart nearly covers (missing   ─┘
+         ingredients)
+cart ───> recipe matching ───────────────────────────────────> "Cook something with your order"
+```
+
+One-off preparation (needed once per database):
+
+```bash
+docker compose exec -T db psql -U recommender -d recommender < db/init/03_recipes.sql   # tables
+docker compose exec -T db psql -U recommender -d recommender < db/sql/classify_products.sql  # categories for the UI
+python3 scripts/build_recipes.py     # Food.com recipes -> Postgres, ingredients linked to products via embeddings
+python3 scripts/train_ranker.py      # trains and evaluates the ranker, writes models/ranker.txt
+```
+
+`build_recipes.py` needs the Food.com files `RAW_recipes.csv` and `RAW_interactions.csv`
+(Kaggle `shuyangli94/food-com-recipes-and-user-interactions`) in `data/raw/foodcom/`.
+Recipes are kept if their rating is at least 4.0 (3+ reviews) and at least 80% of their ingredients can be bought in the store.
+
+Ranker results on 3000 held-out Instacart baskets (a random 30-70% of the basket is the "cart", the rest must be predicted):
+
+| Model | Precision@5 | NDCG@5 |
+|---|---|---|
+| Popular products | 0.060 | 0.122 |
+| Co-purchase KNN | 0.070 | 0.135 |
+| Embedding similarity | 0.004 | 0.007 |
+| KNN + embeddings (rank fusion) | 0.068 | 0.126 |
+| **Hybrid + LightGBM ranker** | **0.081** | **0.166** |
+
+Embeddings alone predict almost nothing here because Instacart baskets contain complements and re-orders,
+not look-alikes. Recipes are not measurable on this dataset (nobody bought "for a recipe"), so they are a product feature,
+not a metric gain.
 
 If the database volume was created for the old dataset, recreate it first: `scripts/reset_db.sh`
 (schema is only applied on an empty volume).

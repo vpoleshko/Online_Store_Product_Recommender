@@ -5,4 +5,4 @@ compose up -d db
 wait_for_db
 
 echo "Open http://127.0.0.1:${API_PORT:-8765}"
-"$PYTHON" -m uvicorn src.api.main:app --port "${API_PORT:-8765}"
+PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}" "$PYTHON" -m uvicorn src.api.main:app --app-dir "$ROOT_DIR" --port "${API_PORT:-8765}"

@@ -5,7 +5,6 @@ from src.recommender.knn import ItemKNN
 
 
 def make_train():
-    # users 1-3 buy {1, 2}; users 4-6 buy {3, 4}; user 7 has only product 1
     rows = []
     for user in (1, 2, 3):
         rows += [(user, 1, 2, 5), (user, 2, 1, 4)]
